@@ -8,5 +8,5 @@ export type Contributor = {
 export enum ContributorRepos {
   ASPIRE_API = 'aspire-api',
   NEOBANK_APP = 'neobank-app',
-  CUSTOMBER_FRONTEND = 'customber-frontend',
+  CUSTOMBER_FRONTEND = 'customer-frontend',
 }
