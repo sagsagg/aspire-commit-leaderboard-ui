@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useDark, useToggle, useFetch } from '@vueuse/core';
-import { GitGraph } from 'lucide-vue-next';
-import { Contributor } from './@types/Contributor.ts';
+import { GitGraph, Frown } from 'lucide-vue-next';
+import { type Contributor } from './@types/Contributor.ts';
 import ContributorItem from './components/ContributorItem.vue';
 import ContributorItemSkeleton from './components/ContributorItemSkeleton.vue';
 
@@ -13,7 +13,7 @@ const toggleDark = useToggle(isDark);
 const { isFetching, data } = useFetch(ENDPOINT);
 
 // Persist data in localStorage
-const contributors = computed<Contributor[]>(() => JSON.parse(data.value));
+const contributors = computed<Contributor[]>(() => JSON.parse(data.value as string) || []);
 </script>
 
 <template>
@@ -35,8 +35,18 @@ const contributors = computed<Contributor[]>(() => JSON.parse(data.value));
         <ContributorItemSkeleton v-if="isFetching" />
 
         <template v-else>
-          <ContributorItem v-for="(contributor, index) in contributors" :key="contributor.username"
-            :contributor="contributor" :index="index" :isDark="isDark" />
+          <template v-if="contributors.length">
+            <ContributorItem v-for="(contributor, index) in contributors" :key="contributor.username"
+              :contributor="contributor" :index="index" :isDark="isDark" />
+          </template>
+
+          <template v-else>
+            <div class="p-6 text-center">
+              <p class="text-lg font-semibold flex items-center justify-center gap-2">
+                <Frown /> No commit for now
+              </p>
+            </div>
+          </template>
         </template>
       </div>
     </div>

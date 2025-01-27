@@ -8,7 +8,11 @@
                     {{ index + 1 }}
                 </span>
 
-                <img class="h-10 w-10 rounded-full" :src="contributor.avatar_url" :alt="contributor.username">
+                <img
+                  v-if="contributor.avatar_url"
+                  class="h-10 w-10 rounded-full"
+                  :src="contributor.avatar_url"
+                  :alt="contributor.username">
             </div>
 
             <div>
@@ -18,7 +22,7 @@
                     <Crown v-if="index === 0" class="text-yellow-300" />
                     {{ contributor.username }}
                 </p>
-                <p class="text-sm text-muted-foreground">
+                <p v-if="contributor.latest_commit_date" class="text-sm text-muted-foreground">
                     Last commit {{ timeAgo(contributor.latest_commit_date) }}
                 </p>
             </div>
@@ -38,7 +42,7 @@
 <script setup lang="ts">
 import { useTimeAgo } from '@vueuse/core';
 import { Crown } from 'lucide-vue-next';
-import { Contributor } from '../@types/Contributor.ts';
+import { type Contributor } from '../@types/Contributor.ts';
 
 type Props = {
     contributor: Contributor;
