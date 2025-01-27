@@ -6,7 +6,7 @@ import { type Contributor } from './@types/Contributor.ts';
 import ContributorItem from './components/ContributorItem.vue';
 import ContributorItemSkeleton from './components/ContributorItemSkeleton.vue';
 
-const ENDPOINT = `${import.meta.env.VITE_API_ENDPOINT}/api/leaderboard?avatar=true`;
+const ENDPOINT = `${import.meta.env.VITE_API_ENDPOINT}/api/leaderboard?avatar=true&repo=customer-frontend`;
 const isDark = useDark()
 const toggleDark = useToggle(isDark);
 
