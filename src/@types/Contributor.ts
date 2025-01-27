@@ -4,3 +4,9 @@ export type Contributor = {
   latest_commit_date: string;
   avatar_url?: string | null;
 }
+
+export enum ContributorRepos {
+  ASPIRE_API = 'aspire-api',
+  NEOBANK_APP = 'neobank-app',
+  CUSTOMBER_FRONTEND = 'customber-frontend',
+}
