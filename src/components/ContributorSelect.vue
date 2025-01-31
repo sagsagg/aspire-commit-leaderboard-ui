@@ -6,6 +6,7 @@
     <option :value="ContributorRepos.CUSTOMBER_FRONTEND" selected>Customer frontend</option>
     <option :value="ContributorRepos.ASPIRE_API">Aspire api</option>
     <option :value="ContributorRepos.NEOBANK_APP">Neobank App</option>
+    <option :value="ContributorRepos.DASHBOARD">Dashboard</option>
   </select>
 </template>
 

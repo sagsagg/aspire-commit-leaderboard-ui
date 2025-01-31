@@ -1,24 +1,37 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useDark, useToggle, useFetch } from '@vueuse/core';
+import { useDark, useToggle } from '@vueuse/core';
 import { GitGraph, Frown } from 'lucide-vue-next';
 import { type Contributor, ContributorRepos } from './@types/Contributor.ts';
 import ContributorItem from './components/ContributorItem.vue';
 import ContributorItemSkeleton from './components/ContributorItemSkeleton.vue';
 import ContributorSelect from './components/ContributorSelect.vue';
+import { useQuery } from '@vue/apollo-composable';
+import gql from 'graphql-tag';
+
+// GraphQL query
+const GET_LEADERBOARD = gql`
+  query GetLeaderboard($repo: String!) {
+    GetLeaderboard(repo: $repo) {
+      username
+      commit_count
+      latest_commit_date
+      avatar_url
+    }
+  }
+`;
 
 const isDark = useDark();
 const selectedRepo = ref<ContributorRepos>(ContributorRepos.CUSTOMBER_FRONTEND);
 
-const endpointUrl = computed(() => {
-  return `${import.meta.env.VITE_API_ENDPOINT}/api/leaderboard?repo=${selectedRepo.value}`;
-});
-
 const toggleDark = useToggle(isDark);
-const { isFetching, data } = useFetch(endpointUrl, { refetch: true });
+const { result, loading, error } = useQuery(GET_LEADERBOARD, () => ({
+  repo: selectedRepo.value,
+}));
+
 
 // Persist data in localStorage
-const contributors = computed<Contributor[]>(() => JSON.parse(data.value as string) || []);
+const contributors = computed<Contributor[]>(() => result.value.GetLeaderboard || []);
 </script>
 
 <template>
@@ -42,7 +55,7 @@ const contributors = computed<Contributor[]>(() => JSON.parse(data.value as stri
         </div>
 
         <div class="divide-y divide-border">
-          <ContributorItemSkeleton v-if="isFetching" />
+          <ContributorItemSkeleton v-if="loading" />
 
           <template v-else>
             <template v-if="contributors.length">
@@ -50,7 +63,7 @@ const contributors = computed<Contributor[]>(() => JSON.parse(data.value as stri
                 :contributor="contributor" :index="index" :isDark="isDark" />
             </template>
 
-            <template v-else>
+            <template v-else-if="error || !contributors.length">
               <div class="p-6 text-center">
                 <p class="text-lg font-semibold flex items-center justify-center gap-2">
                   <Frown /> No commit for now
