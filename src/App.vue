@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useDark, useToggle } from '@vueuse/core';
+import { useDark, useToggle, useDateFormat, useNow } from '@vueuse/core';
 import { GitGraph, Frown } from 'lucide-vue-next';
 import { type Contributor, ContributorRepos } from './@types/Contributor.ts';
 import ContributorItem from './components/ContributorItem.vue';
@@ -32,6 +32,8 @@ const { result, loading, error } = useQuery(GET_LEADERBOARD, () => ({
 
 // Persist data in localStorage
 const contributors = computed<Contributor[]>(() => result.value.GetLeaderboard || []);
+
+const formattedCurrentDate = useDateFormat(useNow(), 'DD-MM-YYYY');
 </script>
 
 <template>
@@ -40,8 +42,14 @@ const contributors = computed<Contributor[]>(() => result.value.GetLeaderboard |
       <div class="rounded-lg border text-card-foreground shadow-sm mx-auto"
         :class="isDark ? 'bg-gray-800' : 'bg-gray-50'">
         <div class="flex items-center justify-between border-b border-border p-6">
-          <h1 class="text-2xl font-semibold flex items-center gap-2">
-            <GitGraph /> Spend commit leaderboard
+          <h1 class="text-2xl font-semibold">
+            <div class="flex gap-2">
+              <GitGraph />
+              <div class="flex flex-col">
+                <span>Commit leaderboard</span>
+                <span class="text-sm font-normal">{{ formattedCurrentDate }}</span>
+              </div>
+            </div>
           </h1>
           <button @click="toggleDark()"
             class="p-2 cursor-pointer rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
