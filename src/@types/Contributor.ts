@@ -3,6 +3,8 @@ export type Contributor = {
   commit_count: number;
   latest_commit_date: string;
   avatar_url?: string | null;
+  latest_commit_message: string;
+  user_login: string;
 }
 
 export enum ContributorRepos {

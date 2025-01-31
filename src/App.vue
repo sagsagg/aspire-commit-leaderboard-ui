@@ -11,7 +11,7 @@ const isDark = useDark();
 const selectedRepo = ref<ContributorRepos>(ContributorRepos.CUSTOMBER_FRONTEND);
 
 const endpointUrl = computed(() => {
-  return `${import.meta.env.VITE_API_ENDPOINT}/api/leaderboard?avatar=true&repo=${selectedRepo.value}`;
+  return `${import.meta.env.VITE_API_ENDPOINT}/api/leaderboard?repo=${selectedRepo.value}`;
 });
 
 const toggleDark = useToggle(isDark);
