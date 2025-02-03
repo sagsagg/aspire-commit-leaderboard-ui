@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useDark, useToggle, useDateFormat, useNow } from '@vueuse/core';
-import { GitGraph, Frown } from 'lucide-vue-next';
+import { GitGraph, Frown, CloudAlert } from 'lucide-vue-next';
 import { type Contributor, ContributorRepos } from './@types/Contributor.ts';
 import ContributorItem from './components/ContributorItem.vue';
 import ContributorItemSkeleton from './components/ContributorItemSkeleton.vue';
@@ -31,7 +31,7 @@ const { result, loading, error } = useQuery(GET_LEADERBOARD, () => ({
 
 
 // Persist data in localStorage
-const contributors = computed<Contributor[]>(() => result.value.GetLeaderboard || []);
+const contributors = computed<Contributor[]>(() => result.value?.GetLeaderboard || []);
 
 const formattedCurrentDate = useDateFormat(useNow(), 'DD-MM-YYYY');
 </script>
@@ -71,7 +71,15 @@ const formattedCurrentDate = useDateFormat(useNow(), 'DD-MM-YYYY');
                 :contributor="contributor" :index="index" :isDark="isDark" />
             </template>
 
-            <template v-else-if="error || !contributors.length">
+            <template v-else-if="error">
+              <div class="p-6 text-center">
+                <p class="text-lg font-semibold flex items-center justify-center gap-2">
+                  <CloudAlert /> Something went wrong
+                </p>
+              </div>
+            </template>
+
+            <template v-else-if="!contributors.length">
               <div class="p-6 text-center">
                 <p class="text-lg font-semibold flex items-center justify-center gap-2">
                   <Frown /> No commit for now
