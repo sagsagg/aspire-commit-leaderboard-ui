@@ -1,5 +1,6 @@
 import { ref, watch, onUnmounted, type Ref } from 'vue';
-import { type ApolloClient, type DocumentNode, type ApolloError, type OperationVariables, type ObservableQuery } from '@apollo/client';
+import { type ApolloClient, type DocumentNode, type OperationVariables, type ObservableQuery, type ErrorLike, type DataValue, type WatchQueryFetchPolicy } from '@apollo/client';
+import type { Subscription } from 'rxjs';
 
 export interface UseQueryOptions<TVariables extends OperationVariables> {
   variables?: Ref<TVariables> | TVariables;
@@ -8,49 +9,68 @@ export interface UseQueryOptions<TVariables extends OperationVariables> {
 }
 
 export interface UseQueryResult<TData> {
-  result: Ref<TData | undefined>;
+  result: Ref<DataValue.Complete<TData> | undefined>;
   loading: Ref<boolean>;
-  error: Ref<ApolloError | undefined>;
+  error: Ref<ErrorLike | undefined>;
   refetch: () => Promise<void>;
 }
 
-export function useApolloQuery<TData = any, TVariables extends OperationVariables = OperationVariables>(
-  client: ApolloClient<any>,
+export function useApolloQuery<TData = unknown, TVariables extends OperationVariables = OperationVariables>(
+  client: ApolloClient,
   query: DocumentNode,
   options: UseQueryOptions<TVariables> = {}
 ): UseQueryResult<TData> {
-  const result = ref<TData>();
+  const result = ref<DataValue.Complete<TData> | undefined>();
   const loading = ref(true);
-  const error = ref<ApolloError>();
-  
-  let observableQuery: ObservableQuery<TData, TVariables> | null = null;
-  let subscription: any = null;
+  const error = ref<ErrorLike | undefined>();
 
-  const getVariables = (): TVariables | undefined => {
+  let observableQuery: ObservableQuery<TData, TVariables> | null = null;
+  let subscription: Subscription | null = null;
+
+  const getVariables = () => {
     if (!options.variables) return undefined;
-    return (typeof options.variables === 'object' && 'value' in options.variables 
-      ? options.variables.value 
-      : options.variables) as TVariables;
+    return (typeof options.variables === 'object' && 'value' in options.variables
+      ? options.variables.value
+      : options.variables);
   };
 
   // Create ObservableQuery using watchQuery (supports cache-and-network)
-  observableQuery = client.watchQuery<TData, TVariables>({
-    query,
-    variables: getVariables(),
-    fetchPolicy: options.fetchPolicy || 'cache-first',
-    pollInterval: options.pollInterval,
-  });
+  const fetchPolicy: WatchQueryFetchPolicy = options.fetchPolicy || 'cache-first';
+  const variables = getVariables();
+  const pollInterval = options.pollInterval;
+
+  // TypeScript's VariablesOption conditional type requires specific handling
+  // We build the options explicitly based on which properties are defined
+  if (pollInterval !== undefined) {
+    observableQuery = client.watchQuery({
+      query,
+      variables,
+      fetchPolicy,
+      pollInterval,
+    });
+  } else {
+    observableQuery = client.watchQuery({
+      query,
+      variables,
+      fetchPolicy,
+    });
+  }
 
   // Subscribe to query results
   subscription = observableQuery.subscribe({
     next: (queryResult) => {
       loading.value = queryResult.loading;
-      result.value = queryResult.data;
+      // When dataState is 'complete', data is guaranteed to be DataValue.Complete<TData>
+      if (queryResult.dataState === 'complete' || queryResult.dataState === 'streaming') {
+        result.value = queryResult.data;
+      } else {
+        result.value = undefined;
+      }
       error.value = queryResult.error;
     },
     error: (err) => {
       loading.value = false;
-      error.value = err as ApolloError;
+      error.value = err;
     },
   });
 
@@ -61,10 +81,12 @@ export function useApolloQuery<TData = any, TVariables extends OperationVariable
   };
 
   // Watch for variable changes if variables is a ref
-  if (options.variables && typeof options.variables === 'object' && 'value' in options.variables) {
-    watch(options.variables, (newVariables) => {
-      if (observableQuery) {
-        observableQuery.setVariables(newVariables as TVariables);
+  const varsOption = options.variables;
+  if (varsOption && typeof varsOption === 'object' && 'value' in varsOption) {
+    // After type guard, TypeScript narrows this to Ref<TVariables>
+    watch(() => varsOption.value, (newVariables: TVariables) => {
+      if (observableQuery && newVariables !== undefined) {
+        observableQuery.setVariables(newVariables);
       }
     }, { deep: true });
   }
@@ -80,7 +102,7 @@ export function useApolloQuery<TData = any, TVariables extends OperationVariable
   });
 
   return {
-    result: result as Ref<TData | undefined>,
+    result,
     loading,
     error,
     refetch,

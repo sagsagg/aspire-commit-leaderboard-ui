@@ -30,7 +30,7 @@ const selectedRepo = ref<ContributorRepos>(ContributorRepos.CUSTOMBER_FRONTEND);
 const toggleDark = useToggle(isDark);
 
 // Inject Apollo Client
-const apolloClient = inject<ApolloClient<any>>('apolloClient');
+const apolloClient = inject<ApolloClient>('apolloClient');
 
 if (!apolloClient) {
   throw new Error('Apollo Client not provided');

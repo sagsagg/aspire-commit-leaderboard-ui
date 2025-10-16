@@ -35,7 +35,7 @@ import { type ApolloClient } from '@apollo/client/core';
 import gql from 'graphql-tag';
 
 // In your component
-const apolloClient = inject<ApolloClient<any>>('apolloClient');
+const apolloClient = inject<ApolloClient>('apolloClient');
 
 const myVariable = ref('some-value');
 
@@ -61,7 +61,7 @@ const { result, loading, error, refetch } = useApolloQuery<MyDataType>(
 
 #### Parameters
 
-- `client: ApolloClient<any>` - The Apollo Client instance
+- `client: ApolloClient` - The Apollo Client instance (no generic in v4)
 - `query: DocumentNode` - The GraphQL query document
 - `options?: UseQueryOptions<TVariables>` - Optional configuration
 
@@ -81,8 +81,15 @@ interface UseQueryOptions<TVariables> {
 interface UseQueryResult<TData> {
   result: Ref<TData | undefined>; // Query result data
   loading: Ref<boolean>; // Loading state
-  error: Ref<ApolloError | undefined>; // Error state
+  error: Ref<ErrorLike | undefined>; // Error state (ErrorLike has message, name, stack)
   refetch: () => Promise<void>; // Manual refetch function
+}
+
+// Note: Apollo Client 4.x removed ApolloError, use ErrorLike instead
+interface ErrorLike {
+  message: string;
+  name: string;
+  stack?: string;
 }
 ```
 
