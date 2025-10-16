@@ -1,18 +1,44 @@
+<script setup lang="ts">
+import { useTimeAgo } from '@vueuse/core';
+import { Crown } from 'lucide-vue-next';
+import { type Contributor } from '../@types/Contributor.ts';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+
+type Props = {
+    contributor: Contributor;
+    index: number;
+    isDark: boolean;
+}
+
+defineProps<Props>();
+
+const timeAgo = (date: Date | string) => {
+    const time = useTimeAgo(typeof date === 'string' ? new Date(date) : date)
+    return time.value
+}
+</script>
+
 <template>
     <div class="flex items-center justify-between p-6">
         <div class="flex items-center gap-4">
             <div class="relative">
-                <span
-                    class="absolute -left-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white"
-                    :class="isDark ? 'bg-stone-600' : 'bg-stone-700'">
+                <Badge 
+                    class="absolute -left-3 -top-3 h-6 w-6 flex items-center justify-center p-0 text-xs z-10"
+                    :variant="index === 0 ? 'default' : 'secondary'">
                     {{ index + 1 }}
-                </span>
+                </Badge>
 
-                <img
-                  v-if="contributor.avatar_url"
-                  class="h-10 w-10 rounded-full"
-                  :src="contributor.avatar_url"
-                  :alt="contributor.username">
+                <Avatar class="h-10 w-10">
+                    <AvatarImage 
+                        v-if="contributor.avatar_url"
+                        :src="contributor.avatar_url" 
+                        :alt="contributor.username" 
+                    />
+                    <AvatarFallback>
+                        {{ contributor.username.substring(0, 2).toUpperCase() }}
+                    </AvatarFallback>
+                </Avatar>
             </div>
 
             <div>
@@ -38,22 +64,3 @@
         </div>
     </div>
 </template>
-
-<script setup lang="ts">
-import { useTimeAgo } from '@vueuse/core';
-import { Crown } from 'lucide-vue-next';
-import { type Contributor } from '../@types/Contributor.ts';
-
-type Props = {
-    contributor: Contributor;
-    index: number;
-    isDark: boolean;
-}
-
-defineProps<Props>();
-
-const timeAgo = (date: Date | string) => {
-    const time = useTimeAgo(typeof date === 'string' ? new Date(date) : date)
-    return time.value
-}
-</script>

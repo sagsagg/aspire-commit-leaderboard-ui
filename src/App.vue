@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, inject } from 'vue';
 import { useDark, useToggle, useDateFormat, useNow } from '@vueuse/core';
-import { GitGraph, Frown, CloudAlert } from 'lucide-vue-next';
+import { GitGraph, Frown, CloudAlert, Moon, Sun } from 'lucide-vue-next';
 import { type Contributor, ContributorRepos } from './@types/Contributor.ts';
 import ContributorItem from './components/ContributorItem.vue';
 import ContributorItemSkeleton from './components/ContributorItemSkeleton.vue';
 import ContributorSelect from './components/ContributorSelect.vue';
-import { useQuery } from '@vue/apollo-composable';
+import { type ApolloClient } from '@apollo/client';
 import gql from 'graphql-tag';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useApolloQuery } from '@/composables/useApolloQuery';
 
 // GraphQL query
 const GET_LEADERBOARD = gql`
@@ -23,14 +27,25 @@ const GET_LEADERBOARD = gql`
 
 const isDark = useDark();
 const selectedRepo = ref<ContributorRepos>(ContributorRepos.CUSTOMBER_FRONTEND);
-
 const toggleDark = useToggle(isDark);
-const { result, loading, error } = useQuery(GET_LEADERBOARD, () => ({
-  repo: selectedRepo.value,
-}));
 
+// Inject Apollo Client
+const apolloClient = inject<ApolloClient<any>>('apolloClient');
 
-// Persist data in localStorage
+if (!apolloClient) {
+  throw new Error('Apollo Client not provided');
+}
+
+// Use custom Apollo Query composable
+const { result, loading, error } = useApolloQuery<{ GetLeaderboard: Contributor[] }>(
+  apolloClient,
+  GET_LEADERBOARD,
+  {
+    variables: computed(() => ({ repo: selectedRepo.value })),
+    fetchPolicy: 'cache-and-network',
+  }
+);
+
 const contributors = computed<Contributor[]>(() => result.value?.GetLeaderboard || []);
 
 const formattedCurrentDate = useDateFormat(useNow(), 'DD-MM-YYYY');
@@ -39,28 +54,30 @@ const formattedCurrentDate = useDateFormat(useNow(), 'DD-MM-YYYY');
 <template>
   <div class="bg-background" :class="isDark ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'">
     <div class="min-h-screen mx-auto p-8 max-w-2xl">
-      <div class="rounded-lg border text-card-foreground shadow-sm mx-auto"
-        :class="isDark ? 'bg-gray-800' : 'bg-gray-50'">
-        <div class="flex items-center justify-between border-b border-border p-6">
-          <h1 class="text-2xl font-semibold">
-            <div class="flex gap-2">
-              <GitGraph />
+      <Card class="mx-auto">
+        <CardHeader class="border-b">
+          <div class="flex items-center justify-between">
+            <CardTitle class="flex gap-2 items-start">
+              <GitGraph class="mt-1" />
               <div class="flex flex-col">
                 <span>Commit leaderboard</span>
-                <span class="text-sm font-normal">{{ formattedCurrentDate }}</span>
+                <span class="text-sm font-normal text-muted-foreground">{{ formattedCurrentDate }}</span>
               </div>
-            </div>
-          </h1>
-          <button @click="toggleDark()"
-            class="p-2 cursor-pointer rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Toggle theme">
-            {{ isDark ? '🌞' : '🌙' }}
-          </button>
-        </div>
+            </CardTitle>
+            <Button 
+              @click="toggleDark()"
+              variant="outline" 
+              size="icon"
+              aria-label="Toggle theme">
+              <Sun v-if="isDark" class="h-[1.2rem] w-[1.2rem]" />
+              <Moon v-else class="h-[1.2rem] w-[1.2rem]" />
+            </Button>
+          </div>
+        </CardHeader>
 
-        <div class="p-6">
+        <CardContent class="pt-6">
           <ContributorSelect v-model="selectedRepo" />
-        </div>
+        </CardContent>
 
         <div class="divide-y divide-border">
           <ContributorItemSkeleton v-if="loading" />
@@ -72,23 +89,29 @@ const formattedCurrentDate = useDateFormat(useNow(), 'DD-MM-YYYY');
             </template>
 
             <template v-else-if="error">
-              <div class="p-6 text-center">
-                <p class="text-lg font-semibold flex items-center justify-center gap-2">
-                  <CloudAlert /> Something went wrong
-                </p>
+              <div class="p-6">
+                <Alert variant="destructive">
+                  <CloudAlert class="h-4 w-4" />
+                  <AlertDescription>
+                    Something went wrong. Please try again later.
+                  </AlertDescription>
+                </Alert>
               </div>
             </template>
 
             <template v-else-if="!contributors.length">
-              <div class="p-6 text-center">
-                <p class="text-lg font-semibold flex items-center justify-center gap-2">
-                  <Frown /> No commit for now
-                </p>
+              <div class="p-6">
+                <Alert>
+                  <Frown class="h-4 w-4" />
+                  <AlertDescription>
+                    No commits for now.
+                  </AlertDescription>
+                </Alert>
               </div>
             </template>
           </template>
         </div>
-      </div>
+      </Card>
     </div>
   </div>
 </template>

@@ -1,15 +1,15 @@
 import './assets/main.css';
 
-import { createApp, provide, h } from "vue";
+import { createApp } from "vue";
 import App from './App.vue';
-import { DefaultApolloClient } from "@vue/apollo-composable";
 import { apolloClient } from './apollo';
 
-createApp({
-  setup() {
-    provide(DefaultApolloClient, apolloClient);
-  },
-  render() {
-    return h(App);
-  }
-}).mount("#app");
+const app = createApp(App);
+
+// Make Apollo Client globally available via app.config.globalProperties
+app.config.globalProperties.$apolloClient = apolloClient;
+
+// Provide Apollo Client for inject/provide pattern
+app.provide('apolloClient', apolloClient);
+
+app.mount("#app");

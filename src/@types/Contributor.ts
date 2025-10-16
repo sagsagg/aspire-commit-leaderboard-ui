@@ -11,4 +11,5 @@ export enum ContributorRepos {
   NEOBANK_APP = 'neobank-app',
   CUSTOMBER_FRONTEND = 'customer-frontend',
   DASHBOARD = 'dashboard',
+  MINT_UI = 'customer-frontend-mint-ui'
 }
